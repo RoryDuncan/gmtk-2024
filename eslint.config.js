@@ -9,8 +9,8 @@ export default tseslint.config(
   {
     rules: {
       "no-empty-function": "off",
-      "@typescript-eslint/no-empty-function": "error"
-
+      "@typescript-eslint/no-empty-function": ["error", ""],
+      "@typescript-eslint/consistent-type-definitions": ["error", "type"]
     }
   }
 );
