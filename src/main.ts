@@ -25,7 +25,6 @@ love.update = (dt: number) => {
 };
 
 love.keypressed = (key: string) => {
-  console.log("keypress", key);
   Scenes.keypress(key);
 
   if (key === "escape") {

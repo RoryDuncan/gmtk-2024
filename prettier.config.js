@@ -9,7 +9,7 @@ const config = {
     singleQuote: false,
     arrowParens: "always",
     bracketSpacing: true,
-    printWidth: 200,
+    printWidth: 150,
     useTabs: false,
     proseWrap: "preserve",
 };
