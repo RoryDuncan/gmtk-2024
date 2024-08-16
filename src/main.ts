@@ -5,18 +5,17 @@ import { GameTime } from "./core/systems/timer";
 import main_menu from "./scenes/main_menu";
 import { game_events } from "./game";
 import level_1 from "./scenes/level_1";
+import level_2 from "./scenes/level_2";
 
 love.load = () => {
-  console.log("Loading!");
-  Scenes.switch(main_menu);
+  Scenes.switch(level_2);
 
   game_events.on("quit", () => {
     love.event.quit();
   });
 
   game_events.on("start", () => {
-    console.log("Switching to level 1");
-    Scenes.switch(level_1);
+    Scenes.switch(level_2);
   });
 };
 
@@ -30,7 +29,6 @@ love.keypressed = (key: string) => {
   Scenes.keypress(key);
 
   if (key === "escape") {
-    console.log("quiting");
     game_events.emit("quit");
   }
 };
@@ -40,9 +38,10 @@ love.draw = () => {
   love.graphics.setColor(1, 1, 0, 1);
 };
 
-// love.conf = (config) => {
-//   print("hello?");
-//   console.log("oy?");
-//   config.console = true;
-//   config.window.title = "GMTK 2024";
-// };
+love.conf = (config) => {
+  print("hello?");
+  console.log("oy?");
+  config.console = true;
+  config.window.title = "GMTK 2024";
+  config.window.resizable = true;
+};
