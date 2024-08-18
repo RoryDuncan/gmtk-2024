@@ -1,5 +1,6 @@
+import { LevelState } from "../../../game";
 import { Milliseconds, Seconds } from "../../types";
-import type { ComponentRecord, QueriedComponentRecord } from "../ecs";
+import type { ComponentRecord, Entity, QueriedComponentRecord } from "../ecs";
 
 export * from "./collider";
 
@@ -25,5 +26,16 @@ export type IntervalComponent = {
 };
 
 export type SpawnUnitComponent = {
-  type: "spawn";
+  type: "spawnunit";
+  x: number;
+  y: number;
+  owned_by: Entity;
+};
+
+export type GridItemComponent = {
+  type: "griditem";
+  row: number;
+  col: number;
+  is_highlighted: boolean;
+  draw: (entity_record: ComponentRecord, state: LevelState) => void;
 };

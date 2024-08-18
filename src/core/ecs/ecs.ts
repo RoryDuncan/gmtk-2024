@@ -1,10 +1,25 @@
 // The core types of the ECS are below
 
-import { PositionComponent, DrawComponent, GameTimeComponent, ColliderComponent, IntervalComponent } from "./components";
+import {
+  PositionComponent,
+  DrawComponent,
+  GameTimeComponent,
+  ColliderComponent,
+  IntervalComponent,
+  SpawnUnitComponent,
+  GridItemComponent,
+} from "./components";
 
 export type Entity = unknown;
 
-export type ComponentType = PositionComponent | DrawComponent | GameTimeComponent | ColliderComponent | IntervalComponent;
+export type ComponentType =
+  | PositionComponent
+  | DrawComponent
+  | GameTimeComponent
+  | ColliderComponent
+  | IntervalComponent
+  | SpawnUnitComponent
+  | GridItemComponent;
 
 // use an interface -- it handles overlaps in the way we want
 export type ComponentRecord = {
@@ -14,6 +29,8 @@ export type ComponentRecord = {
   gametime?: GameTimeComponent;
   collider?: ColliderComponent;
   interval?: IntervalComponent;
+  spawnunit?: SpawnUnitComponent;
+  griditem?: GridItemComponent;
 };
 
 export type Component = keyof ComponentRecord;
@@ -21,7 +38,9 @@ type Identity = {
   entity: Entity;
 };
 
-export type QueriedComponentRecord<TComponentKeys extends keyof ComponentRecord> = Required<Pick<ComponentRecord, TComponentKeys>> & Identity;
+export type QueriedComponentRecord<
+  TComponentKeys extends keyof ComponentRecord,
+> = Required<Pick<ComponentRecord, TComponentKeys>> & Identity;
 
 /**
  * Handles functionality for managing Entities, and their features
@@ -55,7 +74,9 @@ export type EntityComponentManager = {
   /**
    * Finds Entities that have the parameter Component types
    */
-  query: <T extends Component>(...components: T[]) => QueriedComponentRecord<T>[];
+  query: <T extends Component>(
+    ...components: T[]
+  ) => QueriedComponentRecord<T>[];
 
   /**
    * Retrieve the Components assocaited to an Entity
@@ -64,7 +85,9 @@ export type EntityComponentManager = {
   /**
    * Similar to "get", but asserts the entity has specific components
    */
-  tap: <AssertedKeys extends keyof ComponentRecord>(entity: Entity) => QueriedComponentRecord<AssertedKeys>;
+  tap: <AssertedKeys extends keyof ComponentRecord>(
+    entity: Entity,
+  ) => QueriedComponentRecord<AssertedKeys>;
 };
 
 const map = new Map<Entity, ComponentRecord>();
@@ -80,6 +103,8 @@ export const ECS: EntityComponentManager = {
       position: undefined,
       interval: undefined,
       collider: undefined,
+      spawnunit: undefined,
+      griditem: undefined,
     });
     return entity;
   },
@@ -108,6 +133,10 @@ export const ECS: EntityComponentManager = {
       record.collider = component;
     } else if (component.type === "interval") {
       record.interval = component;
+    } else if (component.type === "spawnunit") {
+      record.spawnunit = component;
+    } else if (component.type === "griditem") {
+      record.griditem = component;
     } else {
       const _exhausted: never = component;
     }
@@ -119,10 +148,14 @@ export const ECS: EntityComponentManager = {
     });
   },
 
-  query: <T extends keyof ComponentRecord>(...components: T[]): QueriedComponentRecord<T>[] => {
-    return Array.from(map.values()).filter((item): item is QueriedComponentRecord<T> => {
-      return components.every((component) => item[component] !== undefined);
-    });
+  query: <T extends keyof ComponentRecord>(
+    ...components: T[]
+  ): QueriedComponentRecord<T>[] => {
+    return Array.from(map.values()).filter(
+      (item): item is QueriedComponentRecord<T> => {
+        return components.every((component) => item[component] !== undefined);
+      },
+    );
   },
   get: (entity: Entity) => {
     const result: ComponentRecord = assert(map.get(entity));
