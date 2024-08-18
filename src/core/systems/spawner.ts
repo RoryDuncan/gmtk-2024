@@ -6,24 +6,22 @@ import { create_interval_system } from "./intervals";
 
 export const create_spawner = (owner: Base) => {
   const interval_system = create_interval_system(owner.spawn_rate);
-  // const movement_system = create_interval_system(owner.spawn_rate / 500);
+  const movement_system = create_interval_system(owner.spawn_rate * 3);
   let units: Entity[] = [];
 
-  // movement_system.on("interval", () => {
-  //   const components = ECS.query("spawnunit");
-  //   components.forEach((c) => {
-  //     // c.spawnunit.x += 1;
-  //   });
-  // });
+  movement_system.on("interval", () => {
+    const components = ECS.query("spawnunit");
+    components.forEach((c) => {
+      const change = math.random() >= 0.5 ? 1 : -1;
+      if (math.random() > 0.5) {
+        c.spawnunit.x += change;
+      } else {
+        c.spawnunit.y += change;
+      }
+    });
+  });
 
   interval_system.on("interval", () => {
-    console.log(
-      "spawning unit for",
-      owner.entity,
-      "every",
-      owner.spawn_rate,
-      "seconds",
-    );
     const spawn_entity = ECS.create();
     const component: SpawnUnitComponent = {
       type: "spawnunit",
@@ -39,6 +37,16 @@ export const create_spawner = (owner: Base) => {
 
   return {
     ...interval_system,
+
+    start: () => {
+      movement_system.start();
+      interval_system.start();
+    },
+
+    stop: () => {
+      movement_system.stop();
+      interval_system.stop();
+    },
 
     clear: () => {
       units.forEach((entity) => ECS.removeComponent(entity, "spawnunit"));
