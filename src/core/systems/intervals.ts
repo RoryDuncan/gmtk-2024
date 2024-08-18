@@ -24,13 +24,16 @@ export type IntervalSystem = Omit<Signal<IntervalEventMap>, "emit"> & {
   stop: () => void;
 };
 
-export const create_interval_system = (initial_interval?: Seconds): IntervalSystem => {
+export const create_interval_system = (
+  initial_interval?: Seconds,
+): IntervalSystem => {
   let interval: Seconds = initial_interval ?? 0;
   const signal = createSignal<IntervalEventMap>();
   let last_emitted = GameTime.get_elapsed();
   let target_time = last_emitted + interval;
 
   const entity = ECS.create();
+  console.log("Created interval with entity", entity);
   const component: GameTimeComponent = {
     type: "gametime",
     update(elapsedTime, dt) {
@@ -46,29 +49,40 @@ export const create_interval_system = (initial_interval?: Seconds): IntervalSyst
     },
   };
 
-  const toggle: IntervalSystem["toggle"] = (state) => {
-    if (state) {
-      last_emitted = GameTime.get_elapsed();
-      target_time = last_emitted + interval;
-      ECS.addComponent(entity, component);
-    } else {
-      ECS.removeComponent(entity, "gametime");
-    }
-  };
+  // const toggle: IntervalSystem["toggle"] = (state) => {
+  //   if (state) {
+  //     last_emitted = GameTime.get_elapsed();
+  //     target_time = last_emitted + interval;
+  //     ECS.addComponent(entity, component);
+  //   } else {
+  //     ECS.removeComponent(entity, "gametime");
+  //   }
+  // };
 
-  return {
+  const interval_system: IntervalSystem = {
     ...signal,
 
     start: () => {
-      toggle(true);
-      signal.emit("start");
+      console.log("Starting interval");
+      interval_system.toggle(true);
+      console.log("Starting interval 2");
+      // signal.emit("start");
+      console.log("Starting interval 3");
     },
     stop: () => {
-      toggle(false);
+      interval_system.toggle(false);
       signal.emit("stop");
     },
 
-    toggle,
+    toggle: (state) => {
+      if (state) {
+        last_emitted = GameTime.get_elapsed();
+        target_time = last_emitted + interval;
+        ECS.addComponent(entity, component);
+      } else {
+        ECS.removeComponent(entity, "gametime");
+      }
+    },
 
     set_interval: (rate, reset = true) => {
       interval = rate;
@@ -77,4 +91,6 @@ export const create_interval_system = (initial_interval?: Seconds): IntervalSyst
       }
     },
   };
+
+  return interval_system;
 };

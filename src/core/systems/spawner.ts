@@ -1,13 +1,29 @@
 import { Base } from "../../game";
+import console from "../console";
 import { ECS, Entity, SpawnUnitComponent } from "../ecs";
 import { Milliseconds } from "../types";
 import { create_interval_system } from "./intervals";
 
 export const create_spawner = (owner: Base) => {
-  let spawns: Entity[] = [];
-  const interval_system = create_interval_system(owner.spawn_rate / 1000);
+  const interval_system = create_interval_system(owner.spawn_rate);
+  // const movement_system = create_interval_system(owner.spawn_rate / 500);
+  let units: Entity[] = [];
+
+  // movement_system.on("interval", () => {
+  //   const components = ECS.query("spawnunit");
+  //   components.forEach((c) => {
+  //     // c.spawnunit.x += 1;
+  //   });
+  // });
 
   interval_system.on("interval", () => {
+    console.log(
+      "spawning unit for",
+      owner.entity,
+      "every",
+      owner.spawn_rate,
+      "seconds",
+    );
     const spawn_entity = ECS.create();
     const component: SpawnUnitComponent = {
       type: "spawnunit",
@@ -17,23 +33,16 @@ export const create_spawner = (owner: Base) => {
     };
 
     ECS.addComponent(spawn_entity, component);
-    ECS.addComponent(spawn_entity, {
-      type: "draw",
-      draw(entity_record) {},
-    });
 
-    spawns.push(spawn_entity);
+    units.push(spawn_entity);
   });
 
   return {
     ...interval_system,
 
     clear: () => {
-      spawns.forEach((entity: Entity) => {
-        ECS.removeComponent(entity, "spawnunit");
-      });
-
-      spawns = [];
+      units.forEach((entity) => ECS.removeComponent(entity, "spawnunit"));
+      units = [];
     },
   };
 };

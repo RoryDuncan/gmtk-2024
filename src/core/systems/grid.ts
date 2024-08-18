@@ -21,6 +21,7 @@ export type GridConfig = {
 
 export const create_grid_system = (config?: GridConfig) => {
   let grid: GridItem[] = [];
+  let iterator: GridPosition[] = [];
 
   let grid_rows_count: number;
   let grid_cols_count: number;
@@ -48,6 +49,8 @@ export const create_grid_system = (config?: GridConfig) => {
       grid_cols_count * (grid_size + grid_margin * margins),
     ];
   };
+
+  const get_iterator = () => iterator;
 
   const get_hovered_grid_item = (
     offset: Point,
@@ -94,6 +97,9 @@ export const create_grid_system = (config?: GridConfig) => {
   };
 
   const generate_grid = () => {
+    grid = [];
+    iterator = [];
+
     for (let row_index = 0; row_index < grid_rows_count; row_index++) {
       for (let col_index = 0; col_index < grid_cols_count; col_index++) {
         const item: GridItem = {
@@ -105,6 +111,7 @@ export const create_grid_system = (config?: GridConfig) => {
         };
 
         grid.push(item);
+        iterator.push([row_index, col_index]);
 
         ECS.addComponent(item.entity, {
           type: "griditem",
@@ -173,6 +180,7 @@ export const create_grid_system = (config?: GridConfig) => {
   }
 
   return {
+    get_iterator,
     is_grid_item,
     get_dimensions,
     recalculate,

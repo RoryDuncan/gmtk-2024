@@ -28,7 +28,7 @@ let state: LevelState = {
     color: [0.5, 0.5, 0.8],
     base: [0, 0],
     entity: ECS.create(),
-    spawn_rate: 1,
+    spawn_rate: 1.5,
   },
   enemy: {
     color: [0.8, 0.2, 0.3],
@@ -106,7 +106,7 @@ const main_game = Scenes.create({
         y: height / 2 - grid_height / 2,
       },
     };
-
+    console.log(state);
     const player_spawner = create_spawner(state.player);
     const enemy_spawner = create_spawner(state.enemy);
 
@@ -118,10 +118,11 @@ const main_game = Scenes.create({
     //   console.log("Spawning unit for enemy");
     // });
 
-    // GameTime.wait(1000).then(() => {
-    //   console.log("spawners starting");
-    //   player_spawner.start();
-    //   enemy_spawner.start();
+    // GameTime.wait(500).then(() => {
+    console.log("spawners starting");
+    player_spawner.start();
+    console.log("oy?");
+    enemy_spawner.start();
     // });
   },
 
@@ -177,12 +178,56 @@ const main_game = Scenes.create({
 
     const grid_layer = ECS.query("griditem");
     const drawables = ECS.query("draw");
+    const units = ECS.query("spawnunit");
 
     love.graphics.push();
     love.graphics.translate(state.offset.x, state.offset.y);
 
     grid_layer.forEach((d) => d.griditem.draw(d, state));
     drawables.forEach((d) => d.draw.draw(d));
+
+    const player_units = units.filter(
+      (unit) => unit.spawnunit.owned_by === state.player.entity,
+    );
+    const enemy_units = units.filter(
+      (unit) => unit.spawnunit.owned_by === state.enemy.entity,
+    );
+
+    grid_system.get_iterator().forEach(([grid_x, grid_y]) => {
+      const player_on_tile = player_units.filter(
+        (unit) => unit.spawnunit.x === grid_x && unit.spawnunit.y === grid_y,
+      );
+      const enemy_on_tile = enemy_units.filter(
+        (unit) => unit.spawnunit.x === grid_x && unit.spawnunit.y === grid_y,
+      );
+      const [x, y] = grid_system.calc_grid_location(grid_x, grid_y);
+
+      love.graphics.setColor(...state.enemy.color);
+      enemy_on_tile.forEach((unit, i) => {
+        // todo: wrap row around
+        love.graphics.rectangle(
+          "fill",
+          x + i * 5,
+          state.grid.size + y - 10,
+          4,
+          4,
+        );
+      });
+
+      love.graphics.setColor(...state.player.color);
+      player_on_tile.forEach((unit, i) => {
+        love.graphics.rectangle("fill", x + i * 5, y + 10, 4, 4);
+      });
+    });
+
+    player_units.reduce((counts: Map<string, typeof player_units>, unit) => {
+      const key = `${unit.spawnunit.x}${unit.spawnunit.y}`;
+
+      const previous = counts.get(key) ?? [];
+      counts.set(key, [...previous, unit]);
+
+      return counts;
+    }, new Map<string, typeof player_units>());
 
     love.graphics.pop();
     draw_ui();

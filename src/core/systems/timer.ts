@@ -1,3 +1,4 @@
+import console from "../console";
 import { ECS, type EntityComponentManager } from "../ecs/index";
 import type { Milliseconds, Seconds } from "../types";
 
@@ -5,9 +6,10 @@ export type GameTimer = {
   get_elapsed: () => Milliseconds;
   update: (dt: Milliseconds) => void;
   wait: (time: Milliseconds) => Promise<void>;
-  create_throttle: (time: Milliseconds, callback: CallableFunction) => readonly [execute: CallableFunction, cancel: CallableFunction];
-
-  is_roughly: (time: Milliseconds) => boolean;
+  create_throttle: (
+    time: Milliseconds,
+    callback: CallableFunction,
+  ) => readonly [execute: CallableFunction, cancel: CallableFunction];
 };
 
 type PendingTimer = {
@@ -23,14 +25,6 @@ let timers: PendingTimer[] = [];
 export const GameTime: GameTimer = {
   get_elapsed: () => elapsedTime,
 
-  is_roughly: (time) => {
-    if (elapsedTime >= time) {
-      return true;
-    }
-
-    return false;
-  },
-
   update(dt) {
     elapsedTime += dt;
 
@@ -45,6 +39,7 @@ export const GameTime: GameTimer = {
     }
 
     const items = ECS.query("gametime");
+
     items.forEach((item) => item.gametime.update(elapsedTime, dt));
   },
 
