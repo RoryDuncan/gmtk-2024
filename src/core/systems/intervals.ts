@@ -1,6 +1,11 @@
 import console from "../console";
 import { ECS, Entity, GameTimeComponent } from "../ecs";
-import { createSignal, type Signal } from "../signal";
+import {
+  createSignal,
+  createSignalMap,
+  SignalMany,
+  type Signal,
+} from "../signal";
 import { Milliseconds, Seconds } from "../types";
 import { GameTime } from "./timer";
 
@@ -9,7 +14,7 @@ export type IntervalEventMap = {
   stop: undefined;
   interval: undefined;
 };
-export type IntervalSystem = Omit<Signal<IntervalEventMap>, "emit"> & {
+export type IntervalSystem = Omit<SignalMany<IntervalEventMap>, "emit"> & {
   /**
    *
    * @param new_interval
@@ -28,12 +33,12 @@ export const create_interval_system = (
   initial_interval?: Seconds,
 ): IntervalSystem => {
   let interval: Seconds = initial_interval ?? 0;
-  const signal = createSignal<IntervalEventMap>();
+  const signal = createSignalMap<IntervalEventMap>();
   let last_emitted = GameTime.get_elapsed();
   let target_time = last_emitted + interval;
 
   const entity = ECS.create();
-  console.log("Created interval with entity", entity);
+
   const component: GameTimeComponent = {
     type: "gametime",
     update(elapsedTime, dt) {
@@ -49,25 +54,12 @@ export const create_interval_system = (
     },
   };
 
-  // const toggle: IntervalSystem["toggle"] = (state) => {
-  //   if (state) {
-  //     last_emitted = GameTime.get_elapsed();
-  //     target_time = last_emitted + interval;
-  //     ECS.addComponent(entity, component);
-  //   } else {
-  //     ECS.removeComponent(entity, "gametime");
-  //   }
-  // };
-
   const interval_system: IntervalSystem = {
     ...signal,
 
     start: () => {
-      console.log("Starting interval");
       interval_system.toggle(true);
-      console.log("Starting interval 2");
-      // signal.emit("start");
-      console.log("Starting interval 3");
+      signal.emit("start");
     },
     stop: () => {
       interval_system.toggle(false);

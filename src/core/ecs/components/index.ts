@@ -36,6 +36,5 @@ export type GridItemComponent = {
   type: "griditem";
   row: number;
   col: number;
-  is_highlighted: boolean;
-  draw: (entity_record: ComponentRecord, state: LevelState) => void;
+  segments: number;
 };

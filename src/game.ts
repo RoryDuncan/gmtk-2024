@@ -1,20 +1,25 @@
-import { ECS } from "./core/ecs";
-import { createSignal } from "./core/signal";
-import { GridItem } from "./core/systems/grid";
+import { ECS, Entity } from "./core/ecs";
+import { createSignal, createSignalMap } from "./core/signal";
+import { GridItem, GridPosition } from "./core/systems/grid";
 
 export type GameEvents = {
   start: undefined;
   quit: undefined;
 };
 
-export const game_events = createSignal<GameEvents>();
+export const game_events = createSignalMap<GameEvents>();
 
 export const player = ECS.create();
 
 export type Base = {
-  color: [number, number, number];
-  base: [number, number];
-  entity: unknown;
+  color: readonly [number, number, number];
+  position: GridPosition;
+  entity: Entity;
+  units: Entity[];
+};
+
+export type Player = {
+  entity: Entity;
   spawn_rate: number;
 };
 
@@ -23,8 +28,8 @@ export type LevelState = {
   height: number;
   grid_width: number;
   grid_height: number;
-  player: Base;
-  enemy: Base;
+  player: Player;
+  bases: Base[];
   offset: {
     x: number;
     y: number;

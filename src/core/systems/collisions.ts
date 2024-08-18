@@ -3,20 +3,31 @@ import { assertion } from "../assert";
 import * as bit from "../bit";
 import console from "../console";
 import { ComponentRecord, ECS, Entity, QueriedComponentRecord } from "../ecs";
-import { type Signal, createSignal } from "../signal";
+import { type Signal, SignalMany, createSignalMap } from "../signal";
 
-export type CollisionSystem<EventMap extends Record<string, any> = any> = {
-  events: Signal<EventMap>;
-  update: (entity: Entity, x: number, y: number) => void;
-  check: (component: QueriedComponentRecord<"collider">, target_x: number, target_y: number) => QueriedComponentRecord<"collider">[];
-  move: (dt: number, entity: Entity, x: number, y: number) => QueriedComponentRecord<"collider">[];
-};
+export type CollisionSystem<EventMap extends Record<string, any> = any> =
+  SignalMany<EventMap> & {
+    update: (entity: Entity, x: number, y: number) => void;
+    check: (
+      component: QueriedComponentRecord<"collider">,
+      target_x: number,
+      target_y: number,
+    ) => QueriedComponentRecord<"collider">[];
+    move: (
+      dt: number,
+      entity: Entity,
+      x: number,
+      y: number,
+    ) => QueriedComponentRecord<"collider">[];
+  };
 
-export const createCollisionSystem = <EventMap extends Record<string, any>>(): CollisionSystem<EventMap> => {
-  const events: Signal<EventMap> = createSignal<EventMap>();
+export const createCollisionSystem = <
+  EventMap extends Record<string, any>,
+>(): CollisionSystem<EventMap> => {
+  const events: SignalMany<EventMap> = createSignalMap<EventMap>();
 
   const system: CollisionSystem<EventMap> = {
-    events,
+    ...events,
 
     update: (entity: Entity, x: number, y: number) => {
       const record = ECS.tap<"collider">(entity);
@@ -43,7 +54,11 @@ export const createCollisionSystem = <EventMap extends Record<string, any>>(): C
       return collisions;
     },
 
-    check: (component: QueriedComponentRecord<"collider">, target_x: number, target_y: number) => {
+    check: (
+      component: QueriedComponentRecord<"collider">,
+      target_x: number,
+      target_y: number,
+    ) => {
       const { collider: moved_collider } = component;
       assertion(moved_collider !== undefined);
 

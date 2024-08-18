@@ -4,12 +4,10 @@ import { ECS, Entity } from "../ecs";
 export type GridItem = {
   row: number;
   col: number;
-  segments: number;
-  owned_by: unknown;
   entity: Entity;
 };
 
-export type GridPosition = [number, number];
+export type GridPosition = readonly [number, number];
 
 export type GridConfig = {
   row_count: number;
@@ -105,8 +103,6 @@ export const create_grid_system = (config?: GridConfig) => {
         const item: GridItem = {
           row: row_index,
           col: col_index,
-          segments: 5 + Math.floor(Math.random() * 3),
-          owned_by: null,
           entity: ECS.create(),
         };
 
@@ -117,36 +113,7 @@ export const create_grid_system = (config?: GridConfig) => {
           type: "griditem",
           row: row_index,
           col: col_index,
-          is_highlighted: false,
-          draw(entity_record, state) {
-            let color: readonly [number, number, number] = [
-              154 / 255,
-              194 / 255,
-              105 / 255,
-            ];
-            const [x, y] = calc_grid_location(item.row, item.col);
-
-            if (entity_record.entity === state.highlighted?.entity) {
-              color = [199 / 255, 232 / 255, 158 / 255];
-            }
-
-            if (is_grid_item(state.player.base, item.row, item.col)) {
-              color = state.player.color;
-            } else if (is_grid_item(state.enemy.base, item.row, item.col)) {
-              color = state.enemy.color;
-            }
-
-            love.graphics.setColor(...color);
-            // love.graphics.rectangle("fill", x, y, grid_size, grid_size);
-            const radius = grid_size / 2;
-            love.graphics.circle(
-              "fill",
-              x + radius,
-              y + radius,
-              grid_size / 2,
-              item.segments,
-            );
-          },
+          segments: 5 + Math.floor(Math.random() * 3),
         });
       }
     }
@@ -156,23 +123,26 @@ export const create_grid_system = (config?: GridConfig) => {
     return x === row && y === col;
   };
 
-  const generate_bases = (): readonly [
-    player: GridPosition,
-    enemy: GridPosition,
-  ] => {
-    const end_col = grid_cols_count - 1;
-    const end_row = grid_rows_count - 1;
-    const left_half = Math.round(end_row / 2);
+  type GridRange = {
+    min: number;
+    max: number;
+  };
+  const generate_random_position = (
+    row_range?: Partial<GridRange>,
+    col_range?: Partial<GridRange>,
+  ): GridPosition => {
+    const start_row = row_range?.min ?? 0;
+    const end_row = row_range?.max ?? grid_rows_count - 1;
 
-    const player_base: GridPosition = [
-      math.random(0, left_half),
-      math.random(0, end_col),
+    const start_col = col_range?.min ?? 0;
+    const end_col = col_range?.max ?? grid_cols_count - 1;
+
+    const result: GridPosition = [
+      math.random(start_row, end_row),
+      math.random(start_col, end_col),
     ];
-    const enemy_base: GridPosition = [
-      math.random(left_half, end_row),
-      math.random(0, end_col),
-    ];
-    return [player_base, enemy_base];
+
+    return result;
   };
 
   if (config !== undefined) {
@@ -186,7 +156,7 @@ export const create_grid_system = (config?: GridConfig) => {
     recalculate,
     get_hovered_grid_item,
     generate_grid,
-    generate_bases,
+    generate_random_position,
     calc_grid_location,
   };
 };

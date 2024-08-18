@@ -4,30 +4,22 @@ import { ECS, Entity, SpawnUnitComponent } from "../ecs";
 import { Milliseconds } from "../types";
 import { create_interval_system } from "./intervals";
 
-export const create_spawner = (owner: Base) => {
-  const interval_system = create_interval_system(owner.spawn_rate);
-  const movement_system = create_interval_system(owner.spawn_rate * 3);
+export const create_spawner = (
+  owner: Entity,
+  spawn_rate: number,
+  max_spawns: number,
+) => {
+  const interval_system = create_interval_system(spawn_rate);
+  const movement_system = create_interval_system(spawn_rate * 3);
   let units: Entity[] = [];
-
-  movement_system.on("interval", () => {
-    const components = ECS.query("spawnunit");
-    components.forEach((c) => {
-      const change = math.random() >= 0.5 ? 1 : -1;
-      if (math.random() > 0.5) {
-        c.spawnunit.x += change;
-      } else {
-        c.spawnunit.y += change;
-      }
-    });
-  });
 
   interval_system.on("interval", () => {
     const spawn_entity = ECS.create();
     const component: SpawnUnitComponent = {
       type: "spawnunit",
-      owned_by: owner.entity,
-      x: owner.base[0],
-      y: owner.base[1],
+      owned_by: owner,
+      x: 0,
+      y: 0,
     };
 
     ECS.addComponent(spawn_entity, component);
