@@ -12,6 +12,7 @@ import { Scenes } from "../core/scene";
 
 import { create_grid_system, GridConfig, GridItem } from "../core/systems/grid";
 import { create_interval_system } from "../core/systems/intervals";
+import { create_spawner } from "../core/systems/spawner";
 import { GameTime } from "../core/systems/timer";
 import { clamp } from "../core/utils";
 import { Base, LevelState } from "../game";
@@ -106,22 +107,22 @@ const main_game = Scenes.create({
       },
     };
 
-    const player_spawner = create_interval_system(state.enemy.spawn_rate);
-    const enemy_spawner = create_interval_system(state.enemy.spawn_rate);
+    const player_spawner = create_spawner(state.player);
+    const enemy_spawner = create_spawner(state.enemy);
 
-    player_spawner.on("interval", () => {
-      console.log("Spawning unit for player");
-    });
+    // player_spawner.on("interval", () => {
+    //   console.log("Spawning unit for player");
+    // });
 
-    enemy_spawner.on("interval", () => {
-      console.log("Spawning unit for enemy");
-    });
+    // enemy_spawner.on("interval", () => {
+    //   console.log("Spawning unit for enemy");
+    // });
 
-    GameTime.wait(1000).then(() => {
-      console.log("spawners starting");
-      player_spawner.start();
-      enemy_spawner.start();
-    });
+    // GameTime.wait(1000).then(() => {
+    //   console.log("spawners starting");
+    //   player_spawner.start();
+    //   enemy_spawner.start();
+    // });
   },
 
   update(dt) {
