@@ -9,5 +9,3 @@ export type GameEvents = {
 export const game_events = createSignal<GameEvents>();
 
 export const player = ECS.create();
-export const zoom_in = ECS.create();
-export const zoom_out = ECS.create();

@@ -24,7 +24,7 @@ const main_menu = Scenes.create({
     //
   },
 
-  keypress: (key) => {
+  keypressed: (key) => {
     if (key === "return") {
       game_events.emit("start");
     }

@@ -2,20 +2,20 @@ import { Scenes } from "./core/scene";
 
 import console from "./core/console";
 import { GameTime } from "./core/systems/timer";
-import main_menu from "./scenes/main_menu";
 import { game_events } from "./game";
-import level_1 from "./scenes/level_1";
-import level_2 from "./scenes/level_2";
+
+import main_menu from "./scenes/main_menu";
+import main_game from "./scenes/main_game";
 
 love.load = () => {
-  Scenes.switch(level_2);
+  Scenes.switch(main_game);
 
   game_events.on("quit", () => {
     love.event.quit();
   });
 
   game_events.on("start", () => {
-    Scenes.switch(level_2);
+    Scenes.switch(main_game);
   });
 };
 
@@ -24,12 +24,16 @@ love.update = (dt: number) => {
   Scenes.update(dt);
 };
 
-love.keypressed = (key: string) => {
-  Scenes.keypress(key);
+love.keypressed = (key, scancode, isrepeat) => {
+  Scenes.keypressed(key, scancode, isrepeat);
 
   if (key === "escape") {
     game_events.emit("quit");
   }
+};
+
+love.mousemoved = (x, y, dx, dy, istouch) => {
+  Scenes.mousemoved(x, y, dx, dy, istouch);
 };
 
 love.draw = () => {

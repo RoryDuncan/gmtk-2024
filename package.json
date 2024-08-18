@@ -20,6 +20,7 @@
     "@types/eslint__js": "^8.42.3",
     "@typescript-to-lua/language-extensions": "^1.19.0",
     "eslint": "^9.8.0",
+    "eslint-config-prettier": "^9.1.0",
     "love-typescript-definitions": "^11.4.3",
     "lua-types": "^2.13.1",
     "prettier": "^3.3.3",

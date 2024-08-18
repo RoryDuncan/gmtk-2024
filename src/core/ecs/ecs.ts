@@ -1,22 +1,19 @@
 // The core types of the ECS are below
 
-import { PositionComponent, VelocityComponent, DrawComponent, GameTimeComponent, ShootComponent, ColliderComponent, ScaleChangeComponent, CharacterComponent } from "./components";
+import { PositionComponent, DrawComponent, GameTimeComponent, ColliderComponent, IntervalComponent } from "./components";
 
 export type Entity = unknown;
 
-export type ComponentType = PositionComponent | VelocityComponent | DrawComponent | GameTimeComponent | ShootComponent | ColliderComponent | ScaleChangeComponent | CharacterComponent;
+export type ComponentType = PositionComponent | DrawComponent | GameTimeComponent | ColliderComponent | IntervalComponent;
 
 // use an interface -- it handles overlaps in the way we want
 export type ComponentRecord = {
   entity: Entity;
   position?: PositionComponent;
-  velocity?: VelocityComponent;
   draw?: DrawComponent;
   gametime?: GameTimeComponent;
-  shoot?: ShootComponent;
   collider?: ColliderComponent;
-  scalechange?: ScaleChangeComponent;
-  character?: CharacterComponent;
+  interval?: IntervalComponent;
 };
 
 export type Component = keyof ComponentRecord;
@@ -81,11 +78,8 @@ export const ECS: EntityComponentManager = {
       draw: undefined,
       gametime: undefined,
       position: undefined,
-      shoot: undefined,
-      velocity: undefined,
+      interval: undefined,
       collider: undefined,
-      scalechange: undefined,
-      character: undefined,
     });
     return entity;
   },
@@ -106,20 +100,14 @@ export const ECS: EntityComponentManager = {
     // record[component.type] = component;
     if (component.type === "position") {
       record.position = component;
-    } else if (component.type === "velocity") {
-      record.velocity = component;
     } else if (component.type === "draw") {
       record.draw = component;
     } else if (component.type === "gametime") {
       record.gametime = component;
-    } else if (component.type === "shoot") {
-      record.shoot = component;
     } else if (component.type === "collider") {
       record.collider = component;
-    } else if (component.type === "scalechange") {
-      record.scalechange = component;
-    } else if (component.type === "character") {
-      record.character = component;
+    } else if (component.type === "interval") {
+      record.interval = component;
     } else {
       const _exhausted: never = component;
     }
