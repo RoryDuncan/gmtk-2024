@@ -11,11 +11,10 @@ import {
 import { Scenes } from "../core/scene";
 
 import { create_grid_system, GridConfig, GridItem } from "../core/systems/grid";
-import { create_interval_system } from "../core/systems/intervals";
-import { create_spawner } from "../core/systems/spawner";
-import { GameTime } from "../core/systems/timer";
+
+import { create_trade_system } from "../core/systems/trade";
 import { clamp, random_rgb } from "../core/utils";
-import { Base, LevelState } from "../game";
+import type { Base, LevelState } from "../game";
 
 math.randomseed(os.time());
 
@@ -57,7 +56,10 @@ let state: LevelState = {
   highlighted: undefined,
 };
 
+let stop_trade_systems: (() => void)[] = [];
+
 const grid_system = create_grid_system();
+const trade_system = create_trade_system();
 
 function draw_bg() {
   love.graphics.setBackgroundColor(0.1, 0.1, 0.1);
@@ -66,6 +68,12 @@ function draw_bg() {
 
 function draw_ui() {
   love.graphics.setColor(0.2, 0.6, 0.6);
+
+  love.graphics.print(
+    `${ECS.query("tradeunit").length} units`,
+    state.width - 120,
+    0,
+  );
 
   love.graphics.print(
     `mouse: ${state.mouse.x} x ${state.mouse.y}`,
@@ -86,6 +94,46 @@ function draw_ui() {
   }
 }
 
+function generate_bases(count: number) {
+  state.bases = [];
+
+  const base_locations = new Set<string>();
+  while (base_locations.size < count) {
+    const grid_position = grid_system.generate_random_position();
+
+    const [x, y] = grid_position;
+
+    const key = `${x}${y}`;
+
+    if (!base_locations.has(key)) {
+      console.log("Generating base at ", grid_position);
+      base_locations.add(key);
+      state.bases.push({
+        color: random_rgb(),
+        entity: ECS.create(),
+        position: grid_position,
+        units: [],
+      });
+    }
+  }
+
+  base_locations.clear();
+}
+
+const restart_trade = (max_bases: number = 2) => {
+  if (stop_trade_systems.length > 0) {
+    stop_trade_systems.forEach((cb) => cb());
+  }
+
+  generate_bases(max_bases);
+  trade_system.set_bases(state.bases);
+  stop_trade_systems = state.bases.map((city) => {
+    const city_trader = trade_system.create_trade_city(city);
+    city_trader.start();
+    return () => city_trader.stop();
+  });
+};
+
 const main_game = Scenes.create({
   name: "main_game",
 
@@ -94,30 +142,6 @@ const main_game = Scenes.create({
 
     grid_system.recalculate(state.grid);
     const [grid_width, grid_height] = grid_system.get_dimensions();
-
-    state.bases = [];
-    const MAX_BASES = 2;
-    const base_locations = new Set<string>();
-    while (base_locations.size < MAX_BASES) {
-      const grid_position = grid_system.generate_random_position();
-
-      const [x, y] = grid_position;
-
-      const key = `${x}${y}`;
-
-      if (!base_locations.has(key)) {
-        console.log("Generating base at ", grid_position);
-        base_locations.add(key);
-        state.bases.push({
-          color: random_rgb(),
-          entity: ECS.create(),
-          position: grid_position,
-          units: [],
-        });
-      }
-    }
-
-    base_locations.clear();
 
     state = {
       ...state,
@@ -130,9 +154,13 @@ const main_game = Scenes.create({
         y: height / 2 - grid_height / 2,
       },
     };
+
+    restart_trade(3);
   },
 
   update(dt) {
+    trade_system.update(dt);
+
     const change = { x: 0, y: 0 };
     const amount = 10;
     if (love.keyboard.isDown("left")) {
@@ -166,7 +194,16 @@ const main_game = Scenes.create({
     }
   },
 
-  keypressed: (key) => {},
+  keypressed: (key) => {
+    // for testing
+    // if (key === "=") {
+    //   console.log("restarting trade with more bases");
+    //   restart_trade(state.bases.length + 1);
+    // } else if (key === "-" && state.bases.length > 2) {
+    //   console.log("restarting trade with less bases");
+    //   restart_trade(state.bases.length - 1);
+    // }
+  },
   mousemoved: (x, y, dx, dy, istouch) => {
     state.mouse = {
       x,
@@ -184,7 +221,8 @@ const main_game = Scenes.create({
 
     const grid_layer = ECS.query("griditem");
     const drawables = ECS.query("draw");
-    const units = ECS.query("spawnunit");
+    // const bases = ECS.query("base");
+    const tradeunits = ECS.query("tradeunit");
 
     love.graphics.push();
     love.graphics.translate(state.offset.x, state.offset.y);
@@ -211,16 +249,36 @@ const main_game = Scenes.create({
       // }
 
       love.graphics.setColor(...color);
-      // love.graphics.rectangle("fill", x, y, grid_size, grid_size);
-      const radius = state.grid.size / 2;
+      love.graphics.rectangle("fill", x, y, state.grid.size, state.grid.size);
+      // const radius = state.grid.size / 2;
+      // love.graphics.circle(
+      //   "fill",
+      //   x + radius,
+      //   y + radius,
+      //   state.grid.size / 2,
+      //   item.griditem.segments,
+      // );
+    });
+
+    state.bases.forEach((base) => {
+      const [x, y, size] = grid_system.calc_grid_location(...base.position);
+      love.graphics.setColor(...base.color);
+      love.graphics.rectangle("fill", x, y, size, size);
+    });
+
+    tradeunits.forEach((trade_unit) => {
+      love.graphics.setColor(...trade_unit.tradeunit.color);
+      const [x, y] = grid_system.calc_grid_location(
+        ...trade_unit.tradeunit.position,
+      );
       love.graphics.circle(
         "fill",
-        x + radius,
-        y + radius,
-        state.grid.size / 2,
-        item.griditem.segments,
+        x + state.grid.size / 2,
+        y + state.grid.size / 2,
+        3,
       );
     });
+
     drawables.forEach((d) => d.draw.draw(d));
 
     // const player_units = units.filter(

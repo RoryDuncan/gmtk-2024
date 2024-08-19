@@ -1,4 +1,5 @@
 import { LevelState } from "../../../game";
+import { GridPosition } from "../../systems/grid";
 import { Milliseconds, Seconds } from "../../types";
 import type { ComponentRecord, Entity, QueriedComponentRecord } from "../ecs";
 
@@ -25,11 +26,14 @@ export type IntervalComponent = {
   spawn_rate: number;
 };
 
-export type SpawnUnitComponent = {
-  type: "spawnunit";
-  x: number;
-  y: number;
-  owned_by: Entity;
+export type TradeUnitComponent = {
+  type: "tradeunit";
+  position: GridPosition;
+  home_city: Entity;
+  target_city: Entity;
+  has_goods: boolean;
+  color: readonly [number, number, number];
+  move_delay: number;
 };
 
 export type GridItemComponent = {

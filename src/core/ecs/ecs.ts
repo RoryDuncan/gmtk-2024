@@ -6,7 +6,7 @@ import {
   GameTimeComponent,
   ColliderComponent,
   IntervalComponent,
-  SpawnUnitComponent,
+  TradeUnitComponent,
   GridItemComponent,
 } from "./components";
 
@@ -18,7 +18,7 @@ export type ComponentType =
   | GameTimeComponent
   | ColliderComponent
   | IntervalComponent
-  | SpawnUnitComponent
+  | TradeUnitComponent
   | GridItemComponent;
 
 // use an interface -- it handles overlaps in the way we want
@@ -29,7 +29,7 @@ export type ComponentRecord = {
   gametime?: GameTimeComponent;
   collider?: ColliderComponent;
   interval?: IntervalComponent;
-  spawnunit?: SpawnUnitComponent;
+  tradeunit?: TradeUnitComponent;
   griditem?: GridItemComponent;
 };
 
@@ -103,7 +103,7 @@ export const ECS: EntityComponentManager = {
       position: undefined,
       interval: undefined,
       collider: undefined,
-      spawnunit: undefined,
+      tradeunit: undefined,
       griditem: undefined,
     });
     return entity;
@@ -133,8 +133,8 @@ export const ECS: EntityComponentManager = {
       record.collider = component;
     } else if (component.type === "interval") {
       record.interval = component;
-    } else if (component.type === "spawnunit") {
-      record.spawnunit = component;
+    } else if (component.type === "tradeunit") {
+      record.tradeunit = component;
     } else if (component.type === "griditem") {
       record.griditem = component;
     } else {

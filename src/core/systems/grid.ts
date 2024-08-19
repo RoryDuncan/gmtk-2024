@@ -87,10 +87,17 @@ export const create_grid_system = (config?: GridConfig) => {
   const calc_grid_location = (
     row_index: number,
     col_index: number,
-  ): readonly [row_x: number, row_y: number] => {
+  ): readonly [
+    row_x: number,
+    row_y: number,
+    row_width: number,
+    row_height: number,
+  ] => {
     return [
       (grid_margin * margins + grid_size) * row_index,
       (grid_margin * margins + grid_size) * col_index,
+      grid_size,
+      grid_size,
     ];
   };
 
