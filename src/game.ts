@@ -11,11 +11,19 @@ export const game_events = createSignalMap<GameEvents>();
 
 export const player = ECS.create();
 
+export type Building = {
+  size: number;
+  x: number;
+  y: number;
+};
+
 export type Base = {
   color: readonly [number, number, number];
   position: GridPosition;
   entity: Entity;
   units: Entity[];
+  buildings: Building[];
+  total_trades: number;
 };
 
 export type Player = {
@@ -24,6 +32,8 @@ export type Player = {
 };
 
 export type LevelState = {
+  currency: number;
+  total_trades: number;
   width: number;
   height: number;
   grid_width: number;

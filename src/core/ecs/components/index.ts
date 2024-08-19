@@ -34,6 +34,7 @@ export type TradeUnitComponent = {
   has_goods: boolean;
   color: readonly [number, number, number];
   move_delay: number;
+  trades: number;
 };
 
 export type GridItemComponent = {

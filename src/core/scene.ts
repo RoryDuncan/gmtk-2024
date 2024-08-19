@@ -11,7 +11,7 @@ namespace LoveParams {
   export type Mousemoved = Parameters<NonNullable<typeof love.mousemoved>>;
 }
 
-export type Scene = {
+export type Scene = Record<string, any> & {
   name: string;
   update: (dt: number) => void;
   draw: () => void;
@@ -72,7 +72,13 @@ export const Scenes: SceneManager = {
     }
   },
 
-  mousemoved: (x: number, y: number, dx: number, dy: number, istouch: boolean) => {
+  mousemoved: (
+    x: number,
+    y: number,
+    dx: number,
+    dy: number,
+    istouch: boolean,
+  ) => {
     if (current.mousemoved) {
       current.mousemoved(x, y, dx, dy, istouch);
     }

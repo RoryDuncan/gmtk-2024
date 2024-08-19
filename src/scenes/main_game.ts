@@ -7,6 +7,7 @@ import {
   ECS,
   Entity,
   QueriedComponentRecord,
+  TradeUnitComponent,
 } from "../core/ecs";
 import { Scenes } from "../core/scene";
 
@@ -19,23 +20,17 @@ import type { Base, LevelState } from "../game";
 math.randomseed(os.time());
 
 let state: LevelState = {
+  currency: 0,
+  total_trades: 0,
   width: 0,
   height: 0,
   grid_width: 0,
   grid_height: 0,
   player: {
-    // color: [0.5, 0.5, 0.8],
-    // base: [0, 0],
     entity: ECS.create(),
     spawn_rate: 1.5,
   },
   bases: [],
-  // enemy: {
-  //   color: [0.8, 0.2, 0.3],
-  //   base: [0, 0] as [number, number],
-  //   entity: ECS.create(),
-  //   spawn_rate: 1,
-  // },
   offset: {
     x: 0,
     y: 0,
@@ -61,6 +56,24 @@ let stop_trade_systems: (() => void)[] = [];
 const grid_system = create_grid_system();
 const trade_system = create_trade_system();
 
+const create_building = () => {
+  const size = 10;
+  return {
+    size,
+    x: math.random(0, state.grid.size - size),
+    y: math.random(0, state.grid.size - size),
+  };
+};
+const on_trade = (trader: TradeUnitComponent, associated_city: Base) => {
+  state.currency += math.floor(1.1 * trader.trades);
+  state.total_trades += 1;
+
+  associated_city.total_trades += 1;
+  if (associated_city.total_trades % 2 === 0) {
+    associated_city.buildings.push(create_building());
+  }
+};
+
 function draw_bg() {
   love.graphics.setBackgroundColor(0.1, 0.1, 0.1);
   love.graphics.setColor(0.4, 0.5, 0.8);
@@ -74,6 +87,8 @@ function draw_ui() {
     state.width - 120,
     0,
   );
+  love.graphics.print(`$${state.currency}`, 20, 0);
+  love.graphics.print(`total trades: ${state.total_trades}`, 20, 20);
 
   love.graphics.print(
     `mouse: ${state.mouse.x} x ${state.mouse.y}`,
@@ -113,6 +128,8 @@ function generate_bases(count: number) {
         entity: ECS.create(),
         position: grid_position,
         units: [],
+        total_trades: 0,
+        buildings: [create_building()],
       });
     }
   }
@@ -121,6 +138,7 @@ function generate_bases(count: number) {
 }
 
 const restart_trade = (max_bases: number = 2) => {
+  trade_system.clear();
   if (stop_trade_systems.length > 0) {
     stop_trade_systems.forEach((cb) => cb());
   }
@@ -131,6 +149,16 @@ const restart_trade = (max_bases: number = 2) => {
     const city_trader = trade_system.create_trade_city(city);
     city_trader.start();
     return () => city_trader.stop();
+  });
+
+  trade_system.on("trade", (trader: TradeUnitComponent) => {
+    const associated_city = state.bases.find(
+      (a) => a.entity === trader.home_city,
+    );
+
+    if (associated_city !== undefined) {
+      on_trade(trader, associated_city);
+    }
   });
 };
 
@@ -221,7 +249,6 @@ const main_game = Scenes.create({
 
     const grid_layer = ECS.query("griditem");
     const drawables = ECS.query("draw");
-    // const bases = ECS.query("base");
     const tradeunits = ECS.query("tradeunit");
 
     love.graphics.push();
@@ -242,12 +269,6 @@ const main_game = Scenes.create({
         color = [199 / 255, 232 / 255, 158 / 255];
       }
 
-      // if (is_grid_item(state.player.base, item.row, item.col)) {
-      //   color = state.player.color;
-      // } else if (is_grid_item(state.enemy.base, item.row, item.col)) {
-      //   color = state.enemy.color;
-      // }
-
       love.graphics.setColor(...color);
       love.graphics.rectangle("fill", x, y, state.grid.size, state.grid.size);
       // const radius = state.grid.size / 2;
@@ -263,7 +284,15 @@ const main_game = Scenes.create({
     state.bases.forEach((base) => {
       const [x, y, size] = grid_system.calc_grid_location(...base.position);
       love.graphics.setColor(...base.color);
-      love.graphics.rectangle("fill", x, y, size, size);
+      base.buildings.forEach((building) => {
+        love.graphics.rectangle(
+          "fill",
+          x + building.x,
+          y + building.y,
+          building.size,
+          building.size,
+        );
+      });
     });
 
     tradeunits.forEach((trade_unit) => {

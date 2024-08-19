@@ -1,6 +1,7 @@
 import { Base, LevelState } from "../../game";
 import console from "../console";
 import { ECS, Entity, TradeUnitComponent } from "../ecs";
+import { createSignal } from "../signal";
 import { Milliseconds, Seconds } from "../types";
 import { get_direction_on_grid, random_item } from "../utils";
 import { create_interval_system } from "./intervals";
@@ -12,6 +13,7 @@ export const create_trade_system = () => {
   const max_trade_units = 2;
   const current_move_delay: Milliseconds = 500 / 1000;
   const spawn_rate = 1;
+  const signal = createSignal("trade");
 
   const start = (_bases: Base[]) => {
     bases = _bases;
@@ -28,25 +30,29 @@ export const create_trade_system = () => {
       (record) => record.tradeunit.target_city === undefined,
     );
 
-    // handle units that don't have a target yet
+    // handle units that don't have a target
     if (idle_units.length > 0) {
-      console.log(`Handling ${idle_units.length} idle units`);
+      // console.log(`Handling ${idle_units.length} idle units`);
       idle_units.forEach((record) => {
-        const options = bases.filter(
-          (a) => a.entity !== record.tradeunit.home_city,
-        );
+        if (record.tradeunit.has_goods) {
+          record.tradeunit.target_city = record.tradeunit.home_city;
+        } else {
+          const options = bases.filter(
+            (a) => a.entity !== record.tradeunit.home_city,
+          );
 
-        if (options.length === 0) {
-          console.error("Available cities to trade with are depleted or 0.");
+          if (options.length === 0) {
+            console.error("Available cities to trade with are depleted or 0.");
+          }
+
+          const target_city = random_item(options);
+
+          if (target_city === undefined) {
+            console.log("random_item incorrectly indexing");
+          }
+
+          record.tradeunit.target_city = target_city.entity;
         }
-
-        const target_city = random_item(options);
-
-        if (target_city === undefined) {
-          console.log("random_item incorrectly indexing");
-        }
-
-        record.tradeunit.target_city = target_city.entity;
       });
     }
 
@@ -76,6 +82,7 @@ export const create_trade_system = () => {
 
         if (record.tradeunit.move_delay <= 0) {
           record.tradeunit.move_delay = current_move_delay;
+
           // only move cardinally for now?
           if (normalized_x !== 0) {
             record.tradeunit.position = [
@@ -90,9 +97,25 @@ export const create_trade_system = () => {
               record.tradeunit.position[0],
               record.tradeunit.position[1] + normalized_y,
             ];
-            console.log(
-              `Moving ${record.entity} to ${record.tradeunit.position.join(", ")}`,
-            );
+            // console.log(
+            //   `Moving ${record.entity} to ${record.tradeunit.position.join(", ")}`,
+            // );
+          } else if (normalized_x === 0 && normalized_y === 0) {
+            // is at target location...
+
+            // is home and is dropping off goods
+            if (
+              record.tradeunit.has_goods &&
+              record.tradeunit.home_city === record.tradeunit.target_city
+            ) {
+              record.tradeunit.has_goods = false;
+              record.tradeunit.trades += 1;
+
+              signal.emit("trade", record.tradeunit);
+            } else {
+              record.tradeunit.has_goods = true;
+            }
+            record.tradeunit.target_city = undefined;
           }
         }
       }
@@ -121,6 +144,7 @@ export const create_trade_system = () => {
           target_city: undefined,
           position: [...city.position],
           move_delay: current_move_delay,
+          trades: 0,
         };
 
         ECS.addComponent(entity, unit);
@@ -134,6 +158,7 @@ export const create_trade_system = () => {
   };
 
   return {
+    ...signal,
     set_bases: start,
     create_trade_city,
     update,
